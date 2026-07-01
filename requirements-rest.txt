@@ -1,0 +1,14 @@
+# REST-only dependencies — works on Python 3.8 (no vcf-sdk needed).
+#
+# Use this when the customer CANNOT upgrade Python yet (Path A). Every *_rest.py
+# sample, smoke_test.py, and the VCF Automation OAuth flow run with just these.
+# Verified on Python 3.8.20: smoke_test = 4/4 (vCenter / NSX / Operations / SDDC).
+#
+#   python3.8 -m venv .venv && . .venv/bin/activate
+#   pip install -r requirements-rest.txt
+#
+# For the SDK samples (snapshot/clone/dvs + *_sdk.py) you need Python >= 3.10 and
+# `pip install vcf-sdk` — see requirements.txt (Path B).
+
+requests>=2.31
+PyYAML>=6.0

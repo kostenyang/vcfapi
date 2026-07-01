@@ -1,0 +1,70 @@
+# ---------------------------------------------------------------------------
+# Lab connection profile (TEMPLATE) — copy to config/lab.yaml and fill in.
+#   cp config/lab.example.yaml config/lab.yaml
+#
+# config/lab.yaml is git-ignored. NEVER commit real endpoints / passwords.
+# The migration doc explicitly says: hard-coded endpoint / token / cert
+# 一律外部化 (always externalize). This file is how the samples do that.
+#
+# Every value can also be overridden by an environment variable, e.g.:
+#   export VCF_VCENTER_HOST=192.168.114.11
+#   export VCF_PASSWORD='VMware1!VMware1!'
+# ---------------------------------------------------------------------------
+
+# Default homelab = rtolab VCF 9.1 (see kostenyang/lab-info topology/rtolab.md).
+# Switch the whole block to the values under "# --- vcf9.1-lab ---" to target
+# the other lab.
+
+# TLS: nested labs use self-signed certs, so verification is off by default.
+# In production set this to true and point ca_bundle at the real CA.
+verify_tls: false
+# ca_bundle: /path/to/vcf-root-ca.pem
+
+vcenter:
+  host: 192.168.114.11            # kosten-vcf91-vc.rtolab.local (inner vCenter)
+  user: administrator@vsphere.local
+  password: "VMware1!VMware1!"     # lab default; use env var / secret store in prod
+
+sddc_manager:
+  host: 192.168.114.10            # kosten-vcf91-sddc.rtolab.local
+  user: administrator@vsphere.local
+  password: "VMware1!VMware1!"
+
+nsx:
+  host: 192.168.114.13            # kosten-vcf91-nsx.rtolab.local (NSX Manager VIP)
+  user: admin
+  password: "VMware1!VMware1!"
+
+vcf_operations:                    # was vRealize Operations / vROps
+  host: 192.168.114.75            # kosten-vcf91-ops.rtolab.local
+  user: admin
+  password: "VMware1!VMware1!"
+  # authSource: local             # local | <vIDM source name>
+
+log_management:                    # was vRealize Log Insight; auth via VCF Operations
+  # No standalone login in VCF 9 — JWT is obtained from vcf_operations above and
+  # exchanged for an "ops-li" service token. host is only the Log Mgmt data plane.
+  host: 192.168.114.75
+
+vcf_automation:                    # was vRA 8 / Aria Automation
+  host: 192.168.114.87            # kosten-vcf91-vcfa-platform.rtolab.local (VCFA VIP)
+  # VCF Automation 9 is Kubernetes-based with host-based ingress and OIDC login
+  # via VCF Identity Broker. The vRA8 username/password API login is GONE.
+  # 1) connect by FQDN (set `fqdn` if `host` is an IP, to send the right vhost):
+  fqdn: kosten-vcf91-vcfa-platform.rtolab.local
+  # 2) generate an API token in the VCFA UI (My Account > API Tokens) — it is a
+  #    refresh token, exchanged for a 1h Bearer at POST /oauth/provider/token
+  #    (provider) or /oauth/tenant/<org>/token (tenant):
+  api_token: "PASTE_VCFA_API_TOKEN_HERE"
+  # 3) org: leave unset for a PROVIDER (System) token -> /cloudapi/ provider APIs.
+  #    Set to a tenant org name AND use a token generated inside that org to reach
+  #    the IaaS API (/iaas/api/). Provider tokens get 500 on /iaas/api/.
+  # org: lab-vmapps
+
+# ---------------------------------------------------------------------------
+# --- vcf9.1-lab (alternate; domain lab.com, see lab-info topology/vcf91.md) ---
+#   vcenter.host        -> vc-mgmt.lab.com
+#   sddc_manager.host   -> sddc-mgr.lab.com
+#   nsx.host            -> nsx-mgmt.lab.com
+#   (IPs auto-assigned by the installer — resolve the FQDNs via lab DNS)
+# ---------------------------------------------------------------------------

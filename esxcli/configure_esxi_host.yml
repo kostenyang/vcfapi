@@ -1,0 +1,77 @@
+---
+# ESXi host-level config via Ansible — the "third path" (no REST/SDK equivalent).
+#
+# Path A (preferred): community.vmware modules go through the vCenter API, so NO
+#   SSH to the ESXi host is needed (VCF 9 ESXi has SSH disabled by default — KB 86230).
+# Path B (fallback):  SSH + raw esxcli, for host CLI ops with no module.
+#
+# Run:
+#   ansible-galaxy collection install community.vmware
+#   pip install pyvmomi
+#   ansible-playbook esxcli/configure_esxi_host.yml
+#
+# vCenter/host details below read from env vars (same externalisation as the
+# Python samples). Set VCF_VCENTER_HOST / VCF_USER / VCF_PASSWORD first.
+
+- name: Configure ESXi hosts (esxcli operations via Ansible)
+  hosts: localhost
+  gather_facts: false
+  vars:
+    vcenter_hostname: "{{ lookup('env', 'VCF_VCENTER_HOST') }}"
+    vcenter_username: "{{ lookup('env', 'VCF_USER') | default('administrator@vsphere.local', true) }}"
+    vcenter_password: "{{ lookup('env', 'VCF_PASSWORD') }}"
+    esxi_hosts:
+      - vcf-m02-esx01.home.lab
+      - vcf-m02-esx02.home.lab
+    ntp_servers: ["192.168.114.200"]
+    validate_certs: false
+
+  tasks:
+    # --- Path A: via vCenter API (no SSH) -------------------------------------
+    - name: NTP servers
+      community.vmware.vmware_host_ntp:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ validate_certs }}"
+        esxi_hostname: "{{ item }}"
+        ntp_servers: "{{ ntp_servers }}"
+        state: present
+      loop: "{{ esxi_hosts }}"
+
+    - name: Enable + start the NTP daemon and SSH service policy
+      community.vmware.vmware_host_service_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ validate_certs }}"
+        esxi_hostname: "{{ item }}"
+        service_name: ntpd
+        service_policy: "on"
+        state: present
+      loop: "{{ esxi_hosts }}"
+
+    - name: Firewall ruleset (example — allow ntpClient)
+      community.vmware.vmware_host_firewall_manager:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ validate_certs }}"
+        esxi_hostname: "{{ item }}"
+        rules:
+          - name: ntpClient
+            enabled: true
+      loop: "{{ esxi_hosts }}"
+
+    # --- Path B: SSH + raw esxcli fallback (needs SSH enabled — KB 86230) ------
+    # Use only for host CLI ops with no community.vmware module. Add the ESXi
+    # hosts to an inventory group `esxi` with ansible_user=root, then:
+    #
+    #   - hosts: esxi
+    #     gather_facts: false
+    #     tasks:
+    #       - name: SNMP community (raw esxcli)
+    #         ansible.builtin.command:
+    #           cmd: esxcli system snmp set --communities public --enable true
+    #       - name: List software VIBs
+    #         ansible.builtin.command: esxcli software vib list

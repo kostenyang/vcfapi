@@ -1,0 +1,25 @@
+# VCF 9.1 API sample code — Python dependencies
+#
+# Source of truth: the unified VCF SDK replaces the separately-installed
+# pyVmomi / vSphere Automation SDK / vSAN Management SDK starting in VCF 9.
+#   官方: https://github.com/vmware/vcf-sdk-python
+#   Blog: https://blogs.vmware.com/cloud-foundation/2025/06/24/introducing-a-unified-vcf-sdk-9-0-for-python-and-java/
+#
+# Python: VCF 9.0 needs >= 3.9, VCF 9.1 needs >= 3.10. Recommended 3.11 / 3.12.
+# Runtime also needs OpenSSL 3.0+ (TLS 1.2/1.3).
+
+# --- REST samples only need these two (no SDK required) ---
+requests>=2.31
+PyYAML>=6.0
+
+# --- SDK samples (SOAP / vSphere Automation / vSAN / SDDC Manager) ---
+# In VCF 9 install the single unified package instead of the three old SDKs:
+#   pip install vcf-sdk
+# Verified: vcf-sdk 9.1.0.0 is on PyPI and pulls in the unified components —
+#   vmware-vcenter, pyVmomi, vmware-vapi-runtime/-common-client,
+#   vmware-sddc-manager, vmware-vsan-data-protection, vcf-vsphere-utils.
+# Needs Python >= 3.10 (tested on 3.12). Used by:
+#   vcenter/01_connect_unified_sdk.py, 04_vm_snapshot_rest.py (pyVmomi),
+#   06_vm_clone_pyvmomi.py, 07_dvs_inventory_pyvmomi.py
+# Uncomment to install when running the SDK-based samples against a real VCF 9.1:
+# vcf-sdk>=9.1

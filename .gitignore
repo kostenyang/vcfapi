@@ -1,0 +1,17 @@
+# local lab config with real endpoints / credentials — never commit
+config/lab.yaml
+config/*.local.yaml
+.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.venv-sdk/
+venv/
+*.egg-info/
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/
