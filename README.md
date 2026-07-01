@@ -15,7 +15,7 @@ VCF 9.1 實測，並以註解標出「舊 API」與「VCF 9.1 新做法」。
 
 各產品（vSphere 8 / VCF 5.2.1 / Aria Automation 8 / vROps / Log Insight / vRLCM /
 NSX / vSAN）的舊 API 對 VCF 9 差異，整理在
-[`docs/VCF9_API_差異總表_v1.1.xlsx`](docs/VCF9_API_差異總表_v1.1.xlsx)（5 分頁：產品差異總覽、
+[`docs/VCF9_API_差異總表_v1.2.xlsx`](docs/VCF9_API_差異總表_v1.2.xlsx)（5 分頁：產品差異總覽、
 端點對照、SDK 套件對照、認證對照、live 實測+來源）。
 
 ## 來源文件 (Source of truth)
