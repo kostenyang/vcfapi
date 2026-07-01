@@ -96,6 +96,9 @@ pip install -r requirements.txt             # 含 vcf-sdk；snapshot/clone/dvs/*
 ```
 > SDK（pyVmomi / vAPI / SDDC / NSX / Operations）需 Python ≥3.10；本專案皆以 **3.12** 實測。
 
+**入門一支就懂**：`python samples/quickstart_vcf91.py` — 用官方 SDK client 一次連
+vCenter / SDDC / NSX / Operations + VCFA(OAuth)，各讀一項（原廠建議做法）。
+
 <details><summary>過渡權宜（非原廠支援）：暫時卡在 Python 3.8</summary>
 
 若某些主機一時無法升級，短期可用 **REST-only** 在 3.8 上呼叫 VCF 9.1（實測
