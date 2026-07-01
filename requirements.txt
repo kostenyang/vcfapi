@@ -5,7 +5,7 @@
 #   官方: https://github.com/vmware/vcf-sdk-python
 #   Blog: https://blogs.vmware.com/cloud-foundation/2025/06/24/introducing-a-unified-vcf-sdk-9-0-for-python-and-java/
 #
-# Python: VCF 9.0 needs >= 3.9, VCF 9.1 needs >= 3.10. Recommended 3.11 / 3.12.
+# Python: 原廠支援 3.10-3.14；建議並以 3.12 為主（本專案皆以 3.12 實測）。3.8 已 EOL/無支援。
 # Runtime also needs OpenSSL 3.0+ (TLS 1.2/1.3).
 
 # --- REST samples only need these two (no SDK required) ---

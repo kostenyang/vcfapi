@@ -84,26 +84,30 @@ pip install -r requirements.txt
 # pip install vcf-sdk
 ```
 
-> Python 3.11 或 3.12 建議 (同時受 VCF 9.0/9.1 支援)。3.8 不再受支援。
+### Python 版本 — 以原廠支援為準：Python 3.12+（建議）
 
-### 客戶還在 Python 3.8?(升 / 不升 都能連 9.1)
-
-**不用升也能用 VCF 9.1 —— 走 REST 即可。** 實測:Python **3.8.20** + 只裝
-`requests`/`PyYAML`,`smoke_test.py` = **4/4**(vCenter/NSX/Operations/SDDC)。
+**原廠路線（唯一受支援）：Python 3.11 / 3.12（VCF SDK 9.1 支援 3.10–3.14）+ `vcf-sdk`。**
+Python 3.8 已 **EOL、不受原廠支援**。正式環境請直接採 **3.12 以上**。
 
 ```bash
-# Path A(不升,維持 3.8):REST-only,所有 *_rest.py 可跑
-python3.8 -m venv .venv && . .venv/bin/activate
-pip install -r requirements-rest.txt        # 只有 requests + PyYAML,無 vcf-sdk
+# 原廠支援路線：Python 3.12 + vcf-sdk（REST + SDK 全部可用）
+python3.12 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt             # 含 vcf-sdk；snapshot/clone/dvs/*_sdk.py 皆可跑
 ```
-SOAP-only 操作(snapshot/DVS)在 3.8 上維持既有 **pyVmomi 7.0**(9.1 vCenter 仍支援
-7.0.x SOAP,向後相容,屬末期支援)。
+> SDK（pyVmomi / vAPI / SDDC / NSX / Operations）需 Python ≥3.10；本專案皆以 **3.12** 實測。
+
+<details><summary>過渡權宜（非原廠支援）：暫時卡在 Python 3.8</summary>
+
+若某些主機一時無法升級，短期可用 **REST-only** 在 3.8 上呼叫 VCF 9.1（實測
+Python 3.8.20 + 只裝 `requests`/`PyYAML`，`smoke_test.py` = 4/4）；SOAP-only 操作
+（snapshot/DVS）維持既有 **pyVmomi 7.0**（9.1 vCenter 仍宣告 7.0.x SOAP，向後相容）。
 
 ```bash
-# Path B(升 ≥3.10):REST + SDK 全部
-pip install -r requirements.txt             # 含 vcf-sdk;snapshot/clone/dvs/*_sdk.py 可跑
+pip install -r requirements-rest.txt        # 只有 requests + PyYAML，無 vcf-sdk
 ```
-完整對策(怎麼做、限制、建議)見 [`docs/PYTHON_38_STRATEGY.md`](docs/PYTHON_38_STRATEGY.md)。
+**限制**：pyVmomi 7.0 屬 EOL、**無原廠支援**；部分 9.1 新綁定/功能拿不到；僅為升級前
+的過渡，**不建議長期使用**。詳見 [`docs/PYTHON_38_STRATEGY.md`](docs/PYTHON_38_STRATEGY.md)。
+</details>
 
 ## 設定 (連 homelab)
 
