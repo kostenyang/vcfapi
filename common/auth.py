@@ -320,6 +320,54 @@ def vcf_automation_rest(cfg: dict | None = None) -> RestClient:
 
 
 # ---------------------------------------------------------------------------
+# vRA 8 / Aria Automation 8  —  SOURCE / "before" helper (migration baseline)
+#
+# This is the OLD product the customer is migrating FROM. It is included so the
+# same script can read the source estate (projects, deployments, catalog,
+# blueprints, IaaS machines) BEFORE cut-over and diff it against VCF Automation
+# 9. The vRA8 login below (username/password -> cspAuthToken bearer) is exactly
+# the flow that is REMOVED in VCFA 9 — see vcf_automation_rest() for the new
+# OAuth/refresh-token path that replaces it.
+#
+#   vRA 8:  POST /csp/gateway/am/api/login {username,password} -> {cspAuthToken}
+#           Authorization: Bearer <cspAuthToken>   (an OIDC id_token, ~1h)
+#   VCFA 9: POST /oauth/provider|tenant/<org>/token  grant_type=refresh_token
+#
+# NOTE: /csp/gateway/am/api/login/access-token (the refresh-token variant used
+# by vRA Cloud) is 404 on this on-prem 8.x appliance; the id_token from
+# /csp/gateway/am/api/login works directly as a bearer, so we use that.
+# ---------------------------------------------------------------------------
+def vra8_rest(cfg: dict | None = None) -> RestClient:
+    cfg = cfg or config.load("vra8")
+    verify = config.verify_tls(config.load())
+    base = f"https://{cfg['host']}"
+
+    s = requests.Session()
+    s.headers.update({"Accept": "application/json", "Content-Type": "application/json"})
+    # host-based ingress: when connecting by IP, force the vhost via Host header.
+    if cfg.get("fqdn"):
+        s.headers["Host"] = cfg["fqdn"]
+
+    body = {"username": cfg["user"], "password": cfg["password"]}
+    if cfg.get("domain"):                      # vIDM users need their domain
+        body["domain"] = cfg["domain"]
+    r = s.post(f"{base}/csp/gateway/am/api/login",
+               json=body, verify=verify, timeout=60)
+    if r.status_code == 404:
+        raise RuntimeError(
+            "vRA8 /csp/gateway/am/api/login returned 404 — this is NOT a vRA 8 "
+            "host, or you are pointed at a VCF Automation 9 appliance (which "
+            "removed this endpoint). Use vcf_automation_rest() for VCFA 9.")
+    r.raise_for_status()
+    token = r.json().get("cspAuthToken")
+    if not token:
+        raise RuntimeError(f"vRA8 login OK ({r.status_code}) but no cspAuthToken "
+                           f"in response: {r.text[:160]}")
+    s.headers["Authorization"] = f"Bearer {token}"
+    return RestClient(base, s, verify)
+
+
+# ---------------------------------------------------------------------------
 # NSX 9 — Policy API (was NSX-T). Basic auth is the simplest path; switch to
 # session auth (POST /api/session/create + X-XSRF-TOKEN) for high call volumes.
 # ---------------------------------------------------------------------------

@@ -61,6 +61,17 @@ vcf_automation:                    # was vRA 8 / Aria Automation
   #    the IaaS API (/iaas/api/). Provider tokens get 500 on /iaas/api/.
   # org: lab-vmapps
 
+vra8:                              # SOURCE / migration baseline: the OLD vRA 8
+  # The environment being migrated FROM. Reads the source estate (projects,
+  # deployments, catalog, blueprints, IaaS machines) so you can diff before vs
+  # after cut-over. Login is the classic vRA8 flow that VCFA 9 REMOVES:
+  #   POST /csp/gateway/am/api/login {username,password} -> {cspAuthToken} (bearer)
+  host: 192.168.114.90            # vRA 8 / Aria Automation 8 appliance (or LB VIP)
+  fqdn: vra.example.local          # set if `host` is an IP (host-based ingress)
+  user: configadmin                # local appliance admin; or a vIDM user
+  password: "PASTE_VRA8_PASSWORD_HERE"
+  # domain: ""                     # local user: omit. vIDM user: set the domain.
+
 # ---------------------------------------------------------------------------
 # --- vcf9.1-lab (alternate; domain lab.com, see lab-info topology/vcf91.md) ---
 #   vcenter.host        -> vc-mgmt.lab.com
