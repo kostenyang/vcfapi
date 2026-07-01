@@ -9,7 +9,7 @@ VCF 9.1 實測，並以註解標出「舊 API」與「VCF 9.1 新做法」。
 
 ## API vs SDK 對照表
 
-每個操作的 **API（REST）** 與 **SDK（vcf-sdk）** 兩種做法對照，含對應的 `samples/` 範例檔，見 [`docs/VCF9_API_vs_SDK_對照表_v1.xlsx`](docs/VCF9_API_vs_SDK_對照表_v1.xlsx)。範例程式全部集中在 **`samples/`** 資料夾。
+每個操作的 **API（REST）** 與 **SDK（vcf-sdk）** 兩種做法對照，含對應的 `samples/` 範例檔，見 [`docs/VCF9_API_vs_SDK_對照表_v1.1.xlsx`](docs/VCF9_API_vs_SDK_對照表_v1.1.xlsx)。範例程式全部集中在 **`samples/`** 資料夾。
 
 ## 舊 API vs VCF 9 差異總表
 
