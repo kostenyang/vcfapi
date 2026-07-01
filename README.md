@@ -7,6 +7,10 @@ VCF 9.1 實測，並以註解標出「舊 API」與「VCF 9.1 新做法」。
 
 > Sample code for the **new VCF 9.1 API**, designed to be tested against a live lab.
 
+## API vs SDK 對照表
+
+每個操作的 **API（REST）** 與 **SDK（vcf-sdk）** 兩種做法對照，含對應的 `samples/` 範例檔，見 [`docs/VCF9_API_vs_SDK_對照表_v1.xlsx`](docs/VCF9_API_vs_SDK_對照表_v1.xlsx)。範例程式全部集中在 **`samples/`** 資料夾。
+
 ## 舊 API vs VCF 9 差異總表
 
 各產品（vSphere 8 / VCF 5.2.1 / Aria Automation 8 / vROps / Log Insight / vRLCM /
@@ -40,7 +44,7 @@ NSX / vSAN）的舊 API 對 VCF 9 差異，整理在
 ## 目錄結構
 
 ```
-apisample/
+vcfapi/
 ├── common/                 共用：設定載入 + 統一認證
 │   ├── config.py           讀取 config/lab.yaml + 環境變數覆寫
 │   └── auth.py             vCenter / SDDC / NSX / Operations / Log / Automation 連線
@@ -131,11 +135,11 @@ python smoke_test.py
 python smoke_test.py vcenter            # 只測一個元件
 
 # 2) 跑個別範例
-python vcenter/02_vm_inventory_rest.py
-python vcenter/03_vm_power_rest.py my-vm state
-python vcf_operations/01_adapters_and_reports.py
-python sddc_manager/01_credentials_licenses_tasks.py
-python nsx/01_dfw_policy_api.py
+python samples/vcenter/02_vm_inventory_rest.py
+python samples/vcenter/03_vm_power_rest.py my-vm state
+python samples/vcf_operations/01_adapters_and_reports.py
+python samples/sddc_manager/01_credentials_licenses_tasks.py
+python samples/nsx/01_dfw_policy_api.py
 ```
 
 ## 實測結果 (against real VCF 9.1)
@@ -177,18 +181,18 @@ python nsx/01_dfw_policy_api.py
 | 操作 | REST 版 | SDK 版 (`vcf-sdk`) | 實測 |
 |------|---------|-------------------|------|
 | vCenter 連線 | `01_connect_unified_sdk.py`(同檔含 REST+SOAP+vAPI) | 同左 | ✅ |
-| VM inventory | `vcenter/02_vm_inventory_rest.py` | `vcenter/08_vm_inventory_sdk.py` | ✅ |
-| VM power | `vcenter/03_vm_power_rest.py` | `vcenter/09_vm_power_sdk.py` | ✅ |
-| Tagging | `vcenter/05_tagging_rest.py` | `vcenter/10_tagging_sdk.py` | ✅ |
-| VM snapshot | (REST 無此端點,404) | `vcenter/04_vm_snapshot_rest.py`(pyVmomi) | ✅ |
-| VM clone | (REST 部分覆蓋) | `vcenter/06_vm_clone_pyvmomi.py` | ⏸️ |
-| DVS inventory | (REST 覆蓋有限) | `vcenter/07_dvs_inventory_pyvmomi.py` | ✅ |
-| SDDC Manager | `sddc_manager/01_credentials_licenses_tasks.py` | `sddc_manager/02_credentials_licenses_sdk.py` | ✅ |
-| VCF Operations | `vcf_operations/01_adapters_and_reports.py` | `vcf_operations/02_adapters_sdk.py` | ✅ |
-| NSX DFW | `nsx/01_dfw_policy_api.py` | `nsx/02_dfw_policy_sdk.py` | ✅ |
-| VCF Automation | `vcf_automation/01_iaas_catalog.py` | (不在 vcf-sdk,REST only) | ✅ provider+tenant |
-| Log Management | `log_management/01_search_and_forwarders.py` | (整合於 Operations) | ⚠️ 未部署 |
-| ESXi host esxcli | `esxcli/configure_esxi_host.yml`(Ansible，第三條路) | — | CLI/Ansible |
+| VM inventory | `samples/vcenter/02_vm_inventory_rest.py` | `samples/vcenter/08_vm_inventory_sdk.py` | ✅ |
+| VM power | `samples/vcenter/03_vm_power_rest.py` | `samples/vcenter/09_vm_power_sdk.py` | ✅ |
+| Tagging | `samples/vcenter/05_tagging_rest.py` | `samples/vcenter/10_tagging_sdk.py` | ✅ |
+| VM snapshot | (REST 無此端點,404) | `samples/vcenter/04_vm_snapshot_rest.py`(pyVmomi) | ✅ |
+| VM clone | (REST 部分覆蓋) | `samples/vcenter/06_vm_clone_pyvmomi.py` | ⏸️ |
+| DVS inventory | (REST 覆蓋有限) | `samples/vcenter/07_dvs_inventory_pyvmomi.py` | ✅ |
+| SDDC Manager | `samples/sddc_manager/01_credentials_licenses_tasks.py` | `samples/sddc_manager/02_credentials_licenses_sdk.py` | ✅ |
+| VCF Operations | `samples/vcf_operations/01_adapters_and_reports.py` | `samples/vcf_operations/02_adapters_sdk.py` | ✅ |
+| NSX DFW | `samples/nsx/01_dfw_policy_api.py` | `samples/nsx/02_dfw_policy_sdk.py` | ✅ |
+| VCF Automation | `samples/vcf_automation/01_iaas_catalog.py` | (不在 vcf-sdk,REST only) | ✅ provider+tenant |
+| Log Management | `samples/log_management/01_search_and_forwarders.py` | (整合於 Operations) | ⚠️ 未部署 |
+| ESXi host esxcli | `samples/esxcli/configure_esxi_host.yml`(Ansible，第三條路) | — | CLI/Ansible |
 
 跑法:REST 版用 `.venv`(requests/PyYAML);SDK 版用 Python ≥3.10 + `pip install vcf-sdk`。
 連線健檢:`python smoke_test.py`(REST)、`python smoke_test_sdk.py`(SDK)。
@@ -201,17 +205,17 @@ python nsx/01_dfw_policy_api.py
 
 | 區域 | 官方樣本數 | 對應本 repo |
 |------|-----------|-------------|
-| vsphere-samples | 380 | `vcenter/`(REST + pyVmomi) |
-| vcf-operations-samples | 65 | `vcf_operations/`、`log_management/` |
+| vsphere-samples | 380 | `samples/vcenter/`(REST + pyVmomi) |
+| vcf-operations-samples | 65 | `samples/vcf_operations/`、`samples/log_management/` |
 | vcf-installer-samples | 28 | (本 repo 未涵蓋) |
-| sddc-manager-samples | 20 | `sddc_manager/` |
-| nsx-samples | 9 | `nsx/` |
+| sddc-manager-samples | 20 | `samples/sddc_manager/` |
+| nsx-samples | 9 | `samples/nsx/` |
 
 交叉驗證重點:
-- **Snapshot 用 pyVmomi 是對的** — 官方 `vcenter/compute/vm/snapshot_operations.py`
+- **Snapshot 用 pyVmomi 是對的** — 官方 `samples/vcenter/compute/vm/snapshot_operations.py`
   也是 `pyVmomi` + `CreateSnapshot_Task`(SOAP),非 REST,印證本 repo `04`。
 - **VCF Automation 不在此 SDK** — 官方樣本完全沒有 vra/iaas/automation 區;VCFA 是
-  獨立 REST API(自有 token 認證),所以本 repo `vcf_automation/` 用 REST 是唯一途徑。
+  獨立 REST API(自有 token 認證),所以本 repo `samples/vcf_automation/` 用 REST 是唯一途徑。
 - vSphere/SDDC 的 SDK client 工廠(`create_vsphere_client`/`create_sddc_manager_client`)
   與官方一致;VCF Operations 官方用 `create_vcf_operations_client`,本 repo 用等效的
   `/suite-api/api/` REST(兩者皆可)。
