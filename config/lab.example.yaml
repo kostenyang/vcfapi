@@ -79,3 +79,13 @@ vra8:                              # SOURCE / migration baseline: the OLD vRA 8
 #   nsx.host            -> nsx-mgmt.lab.com
 #   (IPs auto-assigned by the installer — resolve the FQDNs via lab DNS)
 # ---------------------------------------------------------------------------
+
+vsphere8:                          # migration SOURCE: the old vSphere 8 vCenter
+  host: 192.168.114.99
+  fqdn: vc8.example.local
+  user: administrator@vsphere.local
+  password: "PASTE_VSPHERE8_PASSWORD_HERE"
+
+esxi:                              # one ESXi host (SOAP probe targets)
+  host: 192.168.114.14
+  fqdn: esx01.example.local
