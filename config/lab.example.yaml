@@ -60,6 +60,17 @@ vcf_automation:                    # was vRA 8 / Aria Automation
   #    Set to a tenant org name AND use a token generated inside that org to reach
   #    the IaaS API (/iaas/api/). Provider tokens get 500 on /iaas/api/.
   # org: lab-vmapps
+  # ★ /iaas/api/* needs a TENANT token (provider token -> 500) AND the tenant
+  #   user's role must have Cloud Assembly rights + the org onboarded to
+  #   Automation, else 403. /deployment /catalog /blueprint work with any tenant
+  #   token. See docs/VCFA9_TENANT_TOKEN.md + samples/.../02_tenant_token_two_paths.py
+
+vcfa_tenant:                       # tenant-scoped login for /iaas (VCD session)
+  host: 192.168.114.87
+  fqdn: vcfa.example.local
+  org: my-tenant-org               # the org (NOT "System"/provider)
+  user: automation-svc             # a user IN that org
+  password: "PASTE_TENANT_PASSWORD_HERE"
 
 vra8:                              # SOURCE / migration baseline: the OLD vRA 8
   # The environment being migrated FROM. Reads the source estate (projects,
