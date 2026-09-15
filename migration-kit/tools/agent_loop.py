@@ -56,10 +56,20 @@ def tool_call(name, args):
         p = _safe(args["path"])
         if not os.path.relpath(p, HERE).startswith("legacy_app"):
             return "refused: only legacy_app/ is writable"
+        if p.endswith(".py"):
+            import ast
+            try:
+                ast.parse(args["content"])
+            except SyntaxError as e:
+                return "refused: content is not valid Python (%s). File unchanged. Send the complete file." % e
+            if len(args["content"]) < 200:
+                return "refused: content too short to be the whole module. Send the complete file, not a fragment."
         open(p, "w", encoding="utf-8").write(args["content"])
         return "written %d bytes" % len(args["content"])
     if name == "run":
         parts = args["cmd"].split()
+        if parts and parts[0] in ("python", "python3"):
+            parts = parts[1:]
         if not parts or parts[0] not in ALLOWED_CMDS:
             return "refused: allowed = " + ", ".join(ALLOWED_CMDS)
         r = subprocess.run([sys.executable] + parts, cwd=HERE, capture_output=True, text=True, timeout=300)
