@@ -1,0 +1,12 @@
+# 複製成 config.yaml 後填入你的環境。config.yaml 不要進版控。
+verify_tls: false
+
+vcenter:            { host: "vc.example.local",        user: "administrator@vsphere.local", password: "CHANGEME" }
+sddc_manager:       { host: "sddcm.example.local",     user: "administrator@vsphere.local", password: "CHANGEME" }
+nsx:                { host: "nsx.example.local",       user: "admin",                        password: "CHANGEME" }
+vcf_operations:     { host: "ops.example.local",       user: "admin",                        password: "CHANGEME" }
+vcf_installer:      { host: "installer.example.local", user: "admin@local",                  password: "CHANGEME" }
+operations_networks:{ host: "opsnet.example.local",    user: "admin@local",                  password: "CHANGEME" }
+
+# VCF Automation（VCFA）— 走 host-based ingress，host 是 IP 時要另外給 fqdn
+vcfa_tenant:        { host: "vcfa.example.local", fqdn: "vcfa.example.local", org: "my-org", user: "myuser", password: "CHANGEME" }

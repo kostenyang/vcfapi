@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3200" height="1280" viewBox="0 0 1600 640" font-family="Heiti TC, Arial, sans-serif">
+<rect width="1600" height="640" fill="#FFFFFF"/>
+<text x="800" y="55" text-anchor="middle" font-size="32" font-weight="bold" fill="#1B1D36">Agent 遷移迴圈 — 每條舊呼叫走同一條路，直到 verify PASS</text>
+<defs><marker id="a" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#1B1D36"/></marker></defs>
+<g font-size="20" fill="#FFFFFF" font-weight="bold" text-anchor="middle">
+<rect x="60" y="180" width="230" height="130" rx="14" fill="#6C4B94"/><text x="175" y="235">1 scan_legacy</text><text x="175" y="268" font-size="15" font-weight="normal">哪幾行 · 哪個 pattern</text><text x="175" y="290" font-size="15" font-weight="normal">break / deprecated</text>
+<rect x="360" y="180" width="230" height="130" rx="14" fill="#005C8A"/><text x="475" y="235">2 lookup / playbook</text><text x="475" y="268" font-size="15" font-weight="normal">544 條對照 · 9,768 條目錄</text><text x="475" y="290" font-size="15" font-weight="normal">判斷樹 + before/after</text>
+<rect x="660" y="180" width="230" height="130" rx="14" fill="#007B8C"/><text x="775" y="235">3 改寫一個檔</text><text x="775" y="268" font-size="15" font-weight="normal">只動 legacy_app/</text><text x="775" y="290" font-size="15" font-weight="normal">保留簽章與回傳型別</text>
+<rect x="960" y="180" width="230" height="130" rx="14" fill="#6C4B94"/><text x="1075" y="235">4 verify</text><text x="1075" y="268" font-size="15" font-weight="normal">scanner 0 hits ?</text><text x="1075" y="290" font-size="15" font-weight="normal">pytest 全綠 ?（cassette）</text>
+<rect x="1290" y="180" width="250" height="130" rx="14" fill="#61A60E"/><text x="1415" y="235">5 PASS → progress</text><text x="1415" y="268" font-size="15" font-weight="normal">JSON 摘要 · 開 PR</text><text x="1415" y="290" font-size="15" font-weight="normal">人只審 diff + 數字</text>
+</g>
+<g stroke="#1B1D36" stroke-width="4" marker-end="url(#a)">
+<line x1="290" y1="245" x2="350" y2="245"/><line x1="590" y1="245" x2="650" y2="245"/><line x1="890" y1="245" x2="950" y2="245"/><line x1="1190" y1="245" x2="1280" y2="245"/>
+</g>
+<path d="M1075,310 L1075,420 L175,420 L175,318" fill="none" stroke="#F3BA16" stroke-width="5" marker-end="url(#a)"/>
+<text x="625" y="410" text-anchor="middle" font-size="19" fill="#1B1D36" font-weight="bold">FAIL → 帶著 scanner 與測試訊息回到 1（確定的回饋，不靠猜）</text>
+<g font-size="17" fill="#333">
+<text x="80" y="500">完成定義（雙訊號）：</text>
+<text x="100" y="530">• 測試綠 = 行為沒壞（/rest facade、vRealizeOpsToken 在 9.1 都還 200，所以測試不會逼你改）</text>
+<text x="100" y="558">• scanner 0 = 遷完（deprecated 也要清；會 404 的 break 一定要改）</text>
+<text x="100" y="586">• 不過度遷移：NSX MP /api/v1/transport-zones、node、cluster 在 9.1 仍 200，scanner 不標、agent 不動</text>
+</g>
+</svg>

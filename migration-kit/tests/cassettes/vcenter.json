@@ -1,0 +1,23 @@
+{"component": "vCenter 9.1.1.0", "source": "live lab 2026-09-14", "rules": [
+ {"match": {"method": "POST", "path": "/rest/com/vmware/cis/session", "basic_auth": true},
+  "response": {"status": 200, "json": {"value": "<redacted-session-id>"}},
+  "note": "舊 /rest facade 在 9.1 仍 200（已標 deprecated）"},
+ {"match": {"method": "GET", "path": "/rest/vcenter/vm", "headers": {"vmware-api-session-id": "."}},
+  "response": {"status": 200, "json": {"value": [{"vm": "vm-1014", "name": "testvm01", "power_state": "POWERED_ON", "cpu_count": 1, "memory_size_MiB": 512}, {"vm": "vm-1051", "name": "vc01", "power_state": "POWERED_ON", "cpu_count": 4, "memory_size_MiB": 21504}]}}},
+ {"match": {"method": "GET", "path": "/rest/vcenter/host", "headers": {"vmware-api-session-id": "."}},
+  "response": {"status": 200, "json": {"value": [{"host": "host-12", "name": "esx01.example.local", "connection_state": "CONNECTED", "power_state": "POWERED_ON"}]}}},
+ {"match": {"method": "POST", "path": "/api/session", "basic_auth": true},
+  "response": {"status": 201, "json": "<redacted-session-id>"},
+  "note": "新 /api/session 回 201 + 純字串 session id（不是 {value:...}）"},
+ {"match": {"method": "POST", "path": "/api/session", "basic_auth": false},
+  "response": {"status": 401, "json": {"error_type": "UNAUTHENTICATED", "messages": []}}},
+ {"match": {"method": "GET", "path": "/api/vcenter/vm", "headers": {"vmware-api-session-id": "."}},
+  "response": {"status": 200, "json": [{"vm": "vm-1014", "name": "testvm01", "power_state": "POWERED_ON", "cpu_count": 1, "memory_size_MiB": 512}, {"vm": "vm-1051", "name": "vc01", "power_state": "POWERED_ON", "cpu_count": 4, "memory_size_MiB": 21504}]},
+  "note": "新 /api 直接回 list，沒有 value 包裝"},
+ {"match": {"method": "GET", "path": "/api/vcenter/host", "headers": {"vmware-api-session-id": "."}},
+  "response": {"status": 200, "json": [{"host": "host-12", "name": "esx01.example.local", "connection_state": "CONNECTED", "power_state": "POWERED_ON"}]}},
+ {"match": {"method": "GET", "path": "/api/vcenter/.*"},
+  "response": {"status": 401, "json": {"error_type": "UNAUTHENTICATED", "messages": [{"default_message": "Authentication required."}]}}},
+ {"match": {"method": "GET", "path": "/api/appliance/system/version", "headers": {"vmware-api-session-id": "."}},
+  "response": {"status": 200, "json": {"version": "9.1.1.0", "product": "VMware vCenter Server", "type": "vCenter Server with an embedded Platform Services Controller"}}}
+]}

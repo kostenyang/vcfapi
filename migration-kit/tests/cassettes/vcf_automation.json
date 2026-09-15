@@ -1,0 +1,21 @@
+{"component": "VCF Automation 9.1 (VCFA)", "source": "live lab 2026-07-06 與 2026-08-20 兩輪實測；本輪 VIP 未開機故沿用先前紀錄", "rules": [
+ {"match": {"method": "POST", "path": "/csp/gateway/am/api/login"},
+  "response": {"status": 404, "text": "404 page not found"},
+  "note": "vRA 8 帳密登入端點；VCFA 9 直接 404 — 唯一硬斷點"},
+ {"match": {"method": "POST", "path": "/iaas/api/login"},
+  "response": {"status": 400, "json": {"error": "invalid_grant", "error_description": "refresh token is invalid"}},
+  "note": "端點在，但帶合法 provider API token 也回 400"},
+ {"match": {"method": "POST", "path": "/cloudapi/1.0.0/sessions", "headers": {"Authorization": "^Basic "}},
+  "response": {"status": 200, "json": {"id": "urn:vcloud:session:<id>", "user": {"name": "user"}, "org": {"name": "org"}},
+               "headers": {"X-VMWARE-VCLOUD-ACCESS-TOKEN": "<redacted-tenant-jwt>", "X-VMWARE-VCLOUD-TOKEN-TYPE": "Bearer"}},
+  "note": "租戶 token 主路徑：Basic user@org:pw；token 在回應標頭"},
+ {"match": {"method": "POST", "path": "/oauth/tenant/[^/]+/token"},
+  "response": {"status": 200, "json": {"access_token": "<redacted-tenant-jwt>", "token_type": "Bearer", "expires_in": 2592000}}},
+ {"match": {"method": "GET", "path": "/deployment/api/deployments", "headers": {"Authorization": "^Bearer "}},
+  "response": {"status": 200, "json": {"content": [], "totalElements": 0, "numberOfElements": 0}}},
+ {"match": {"method": "GET", "path": "/iaas/api/projects", "headers": {"Authorization": "^Bearer "}},
+  "response": {"status": 403, "json": {"message": "Forbidden", "statusCode": 403}},
+  "note": "租戶 token 無 Cloud Assembly 權限 → 403；provider token → 500；org onboarding 後才 200"},
+ {"match": {"method": "GET", "path": "/(deployment|iaas|catalog|blueprint)/api/.*"},
+  "response": {"status": 401, "json": {"message": "Unauthorized", "statusCode": 401}}}
+]}

@@ -1,0 +1,23 @@
+[
+ {"id": 1, "service": "vCenter / vSphere", "category": "Connection", "method": "POST /rest/com/vmware/cis/session", "endpoint": "/rest/com/vmware/cis/session",
+  "purpose": "vSphere REST 登入（舊 facade）", "legacy_code": "r = requests.post(f\"https://{vc}/rest/com/vmware/cis/session\", auth=(u, p), verify=False)\nsid = r.json()[\"value\"]",
+  "recommended_code": "r = requests.post(f\"https://{vc}/api/session\", auth=(u, p), verify=False)  # 201\nsid = r.json()  # 裸字串",
+  "change": "路徑 + 回應形狀", "urgency": "🟡 小改", "verdict": "相同可用(REST)", "verified": "✅ 9.1 兩者皆 200；/rest 已 deprecated", "action": "改 /api/ 前綴並拿掉 value 一層"},
+ {"id": 2, "service": "vRealize Operations", "category": "Auth", "method": "GET /suite-api/api/resources", "endpoint": "/suite-api/api/resources",
+  "purpose": "查資源", "legacy_code": "headers={\"Authorization\": \"vRealizeOpsToken \" + token}", "recommended_code": "headers={\"Authorization\": \"OpsToken \" + token}",
+  "change": "認證 scheme", "urgency": "🟡 小改", "verdict": "相同可用", "verified": "✅ 9.1 兩種 scheme 都 200；Bearer 401", "action": "改 scheme，其餘不動"},
+ {"id": 3, "service": "NSX-T", "category": "Networking", "method": "GET /api/v1/logical-switches", "endpoint": "/api/v1/logical-switches",
+  "purpose": "列 segment", "legacy_code": "requests.get(f\"https://{nsx}/api/v1/logical-switches\", auth=A, verify=False).json()[\"results\"]",
+  "recommended_code": "requests.get(f\"https://{nsx}/policy/api/v1/infra/segments\", auth=A, verify=False).json()[\"results\"]",
+  "change": "MP → Policy", "urgency": "🔴 必改", "verdict": "新環境 404", "verified": "❌ 9.1 回 404", "action": "改 Policy 端點，回應形狀相同"},
+ {"id": 4, "service": "NSX-T", "category": "Fabric", "method": "GET /api/v1/transport-zones", "endpoint": "/api/v1/transport-zones",
+  "purpose": "列 transport zone", "legacy_code": "requests.get(f\"https://{nsx}/api/v1/transport-zones\", auth=A, verify=False)", "recommended_code": "（不用改）",
+  "change": "無", "urgency": "🟢 不用改", "verdict": "相同可用", "verified": "✅ 9.1 MP 端點仍 200", "action": "留著"},
+ {"id": 5, "service": "vRA", "category": "Auth", "method": "POST /csp/gateway/am/api/login", "endpoint": "/csp/gateway/am/api/login",
+  "purpose": "vRA 8 帳密登入", "legacy_code": "r = requests.post(f\"https://{vra}/csp/gateway/am/api/login?access_token\", json={\"username\": u, \"password\": p})\ntoken = r.json()[\"access_token\"]",
+  "recommended_code": "cred = base64.b64encode(f\"{u}@{org}:{p}\".encode()).decode()\nr = requests.post(f\"https://{vcfa}/cloudapi/1.0.0/sessions\", headers={\"Authorization\": \"Basic \" + cred, \"Accept\": \"application/json;version=9.1.0\"})\ntoken = r.headers[\"X-VMWARE-VCLOUD-ACCESS-TOKEN\"]",
+  "change": "認證架構", "urgency": "🔴 必改", "verdict": "新環境 404", "verified": "❌ VCFA 9 回 404（唯一硬斷點）", "action": "改 VCD session 登入；登入函式加 org 參數"},
+ {"id": 6, "service": "vRealize Lifecycle Manager", "category": "LCM", "method": "GET /lcm/lcops/api/v2/environments", "endpoint": "/lcm/lcops/api/v2/environments",
+  "purpose": "列環境", "legacy_code": "requests.get(f\"https://{vrlcm}/lcm/lcops/api/v2/environments\", headers=H)", "recommended_code": "requests.get(f\"https://{sddcm}/v1/domains\", headers={\"Authorization\": \"Bearer \" + token})",
+  "change": "產品換了", "urgency": "🔴 必改", "verdict": "已移除", "verified": "vRLCM 不在 VCF 9；SDDC Manager /v1/domains 200", "action": "改 SDDC Manager"}
+]

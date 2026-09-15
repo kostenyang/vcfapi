@@ -238,3 +238,10 @@ python samples/nsx/01_dfw_policy_api.py
 
 ---
 版本 v1.0.0 · 對應 VCF SDK 9.1.0.0 · 2026-06
+
+## migration-kit/ — 讓任何 AI agent 幫你遷到 VCF 9.1
+
+`migration-kit/` 是給「想用自家 LLM / 任一 coding agent 改寫舊 vSphere 8 / vRA 8 / vROps / NSX-T 程式」的團隊：
+知識（規則、API 目錄 9,768 條）/ 指令（AGENTS.md + playbooks）/ 驗證（scanner + 離線 cassette 測試）/ 工具（CLI + agent_loop）。
+`python migration-kit/tools/verify.py` 就是 agent 的目標。實測：Haiku 4.5 與 Sonnet 5 都在 2 輪 verify 內完成（見 `migration-kit/results/`）。
+公開版不含客戶的 544 條盤點（改附 `data/mapping_example.json`）。

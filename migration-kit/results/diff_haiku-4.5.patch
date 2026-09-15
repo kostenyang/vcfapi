@@ -1,0 +1,101 @@
+diff -ru -x _ kit/legacy_app/nsx_client.py run-haiku/legacy_app/nsx_client.py
+--- kit/legacy_app/nsx_client.py	2026-09-14 22:08:57
++++ run-haiku/legacy_app/nsx_client.py	2026-09-14 22:15:47
+@@ -10,14 +10,14 @@
+ 
+ 
+ def list_segments(host, user, password, verify=False):
+-    r = requests.get("https://%s/api/v1/logical-switches" % host,
++    r = requests.get("https://%s/policy/api/v1/infra/segments" % host,
+                      auth=(user, password), verify=verify, timeout=30)
+     r.raise_for_status()
+     return r.json()["results"]
+ 
+ 
+ def list_firewall_sections(host, user, password, verify=False):
+-    r = requests.get("https://%s/api/v1/firewall/sections" % host,
++    r = requests.get("https://%s/policy/api/v1/infra/domains/default/security-policies" % host,
+                      auth=(user, password), verify=verify, timeout=30)
+     r.raise_for_status()
+     return r.json()["results"]
+diff -ru -x _ kit/legacy_app/vra_client.py run-haiku/legacy_app/vra_client.py
+--- kit/legacy_app/vra_client.py	2026-09-14 22:08:57
++++ run-haiku/legacy_app/vra_client.py	2026-09-14 22:15:57
+@@ -1,12 +1,15 @@
+ """vRealize Automation 8：csp 帳密登入 + IaaS/Deployment API。"""
++import base64
+ import requests
+ 
+ 
+-def login(host, user, password, verify=False):
+-    r = requests.post("https://%s/csp/gateway/am/api/login?access_token" % host,
+-                      json={"username": user, "password": password}, verify=verify, timeout=30)
++def login(host, user, password, org="System", verify=False):
++    cred = base64.b64encode(f"{user}@{org}:{password}".encode()).decode()
++    r = requests.post("https://%s/cloudapi/1.0.0/sessions" % host,
++                      headers={"Authorization": "Basic " + cred,
++                               "Accept": "application/json;version=9.1.0"}, verify=verify, timeout=30)
+     r.raise_for_status()
+-    return r.json()["access_token"]
++    return r.headers["X-VMWARE-VCLOUD-ACCESS-TOKEN"]
+ 
+ 
+ def list_deployments(host, token, verify=False):
+diff -ru -x _ kit/legacy_app/vrops_client.py run-haiku/legacy_app/vrops_client.py
+--- kit/legacy_app/vrops_client.py	2026-09-14 22:08:57
++++ run-haiku/legacy_app/vrops_client.py	2026-09-14 22:15:36
+@@ -1,4 +1,4 @@
+-"""vRealize Operations 8：suite-api + vRealizeOpsToken 標頭。"""
++"""vRealize Operations 8：suite-api + OpsToken 標頭。"""
+ import requests
+ 
+ 
+@@ -13,7 +13,7 @@
+ def get_resources(host, token, page_size=10, verify=False):
+     r = requests.get("https://%s/suite-api/api/resources" % host,
+                      params={"pageSize": page_size},
+-                     headers={"Authorization": "vRealizeOpsToken " + token,
++                     headers={"Authorization": "OpsToken " + token,
+                               "Accept": "application/json"}, verify=verify, timeout=60)
+     r.raise_for_status()
+     return r.json()["resourceList"]
+@@ -21,7 +21,7 @@
+ 
+ def get_adapter_kinds(host, token, verify=False):
+     r = requests.get("https://%s/suite-api/api/adapterkinds" % host,
+-                     headers={"Authorization": "vRealizeOpsToken " + token,
++                     headers={"Authorization": "OpsToken " + token,
+                               "Accept": "application/json"}, verify=verify, timeout=30)
+     r.raise_for_status()
+     return r.json()["adapter-kind"]
+diff -ru -x _ kit/legacy_app/vsphere_client.py run-haiku/legacy_app/vsphere_client.py
+--- kit/legacy_app/vsphere_client.py	2026-09-14 22:08:57
++++ run-haiku/legacy_app/vsphere_client.py	2026-09-14 22:15:23
+@@ -3,21 +3,21 @@
+ 
+ 
+ def login(host, user, password, verify=False):
+-    r = requests.post("https://%s/rest/com/vmware/cis/session" % host,
++    r = requests.post("https://%s/api/session" % host,
+                       auth=(user, password), verify=verify, timeout=30)
+     r.raise_for_status()
+-    return r.json()["value"]
++    return r.json()
+ 
+ 
+ def list_vms(host, session_id, verify=False):
+-    r = requests.get("https://%s/rest/vcenter/vm" % host,
++    r = requests.get("https://%s/api/vcenter/vm" % host,
+                      headers={"vmware-api-session-id": session_id}, verify=verify, timeout=30)
+     r.raise_for_status()
+-    return r.json()["value"]
++    return r.json()
+ 
+ 
+ def list_hosts(host, session_id, verify=False):
+-    r = requests.get("https://%s/rest/vcenter/host" % host,
++    r = requests.get("https://%s/api/vcenter/host" % host,
+                      headers={"vmware-api-session-id": session_id}, verify=verify, timeout=30)
+     r.raise_for_status()
+-    return r.json()["value"]
++    return r.json()

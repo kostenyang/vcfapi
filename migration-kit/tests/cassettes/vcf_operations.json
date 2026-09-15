@@ -1,0 +1,13 @@
+{"component": "VCF Operations 9.1.1.0 (suite-api)", "source": "live lab 2026-09-14", "rules": [
+ {"match": {"method": "POST", "path": "/suite-api/api/auth/token/acquire"},
+  "response": {"status": 200, "json": {"token": "<redacted-ops-token>", "validity": 1789000000000, "expiresAt": "..."}}},
+ {"match": {"method": "GET", "path": "/suite-api/api/resources", "headers": {"Authorization": "^(OpsToken|vRealizeOpsToken) "}},
+  "response": {"status": 200, "json": {"pageInfo": {"totalCount": 413, "page": 0, "pageSize": 10}, "resourceList": [{"resourceKey": {"name": "MGMT", "adapterKindKey": "VMWARE", "resourceKindKey": "VMFolder"}, "identifier": "<id>"}, {"resourceKey": {"name": "m01-cl01", "adapterKindKey": "VMWARE", "resourceKindKey": "ClusterComputeResource"}, "identifier": "<id>"}]}},
+  "note": "9.1 兩種 scheme 都收：OpsToken（官方）與 vRealizeOpsToken（相容）。Bearer → 401。"},
+ {"match": {"method": "GET", "path": "/suite-api/api/adapterkinds", "headers": {"Authorization": "^(OpsToken|vRealizeOpsToken) "}},
+  "response": {"status": 200, "json": {"adapter-kind": [{"key": "VMWARE", "name": "VMware Adapter"}, {"key": "NSXTAdapter", "name": "NSX-T Adapter"}]}}},
+ {"match": {"method": "GET", "path": "/suite-api/api/versions/current", "headers": {"Authorization": "^(OpsToken|vRealizeOpsToken) "}},
+  "response": {"status": 200, "json": {"releaseName": "VCF Operations 9.1.1.0", "major": 9, "minor": 1}}},
+ {"match": {"method": "GET", "path": "/suite-api/api/.*"},
+  "response": {"status": 401, "json": {"message": "Invalid token / no credentials"}}}
+]}
