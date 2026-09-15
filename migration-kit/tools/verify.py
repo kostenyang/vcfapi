@@ -23,7 +23,7 @@ def main():
     a = ap.parse_args()
     py = sys.executable
     scan = run([py, "tools/scan_legacy.py"])
-    tests = run([py, "-m", "pytest", "-q", "tests"])
+    tests = run([py, "-m", "pytest", "-q", "--tb=line", "-p", "no:cacheprovider", "tests"])
     live = 0
     if a.live:
         for s in ("01_vcenter", "02_sddc_manager", "03_nsx", "04_vcf_operations"):
