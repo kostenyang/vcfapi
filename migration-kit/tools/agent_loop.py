@@ -78,29 +78,53 @@ def chat(messages):
 
 
 def main():
+    import time
     ap = argparse.ArgumentParser()
     ap.add_argument("--max-steps", type=int, default=40)
+    ap.add_argument("--log", default="agent_loop.jsonl")
     a = ap.parse_args()
+    log = open(os.path.join(HERE, a.log), "a")
+    t0 = time.time(); nudges = 0; verify_runs = 0
+    def rec(**kw):
+        kw["t"] = round(time.time() - t0, 1); log.write(json.dumps(kw, ensure_ascii=False) + "\n"); log.flush()
     system = open(os.path.join(HERE, "AGENTS.md"), encoding="utf-8").read()
     messages = [{"role": "system", "content": system},
                 {"role": "user", "content": "目標：讓 `tools/verify.py` 回 PASS（scanner 0 hits、測試全綠）。"
                                             "先 run tools/verify.py 看現況，再逐檔改 legacy_app/。每改一個檔就重跑 verify。"}]
     for step in range(a.max_steps):
-        msg = chat(messages)
+        ts = time.time()
+        try:
+            msg = chat(messages)
+        except Exception as e:
+            print("[%02d] LLM error: %s" % (step, e)); rec(step=step, error=str(e)[:300]); break
         messages.append(msg)
+        rec(step=step, llm_s=round(time.time() - ts, 1), content=(msg.get("content") or "")[:300],
+            tool_calls=[tc["function"]["name"] for tc in (msg.get("tool_calls") or [])])
         if not msg.get("tool_calls"):
-            print("[assistant]", (msg.get("content") or "")[:500])
-            break
+            print("[%02d] assistant: %s" % (step, (msg.get("content") or "")[:200].replace("\n", " ")))
+            nudges += 1
+            if nudges > 3:
+                print("model keeps replying without tools; stop"); break
+            messages.append({"role": "user", "content": "請直接呼叫工具，不要用文字描述。下一步：run tools/verify.py，"
+                                                        "然後 read_file 被標出來的檔案並 write_file 修改它。"})
+            continue
         for tc in msg["tool_calls"]:
             name = tc["function"]["name"]
-            args = json.loads(tc["function"]["arguments"] or "{}")
-            out = tool_call(name, args)
-            print("[%02d] %s %s → %s" % (step, name, json.dumps(args, ensure_ascii=False)[:80], out[:120].replace("\n", " ")))
-            messages.append({"role": "tool", "tool_call_id": tc["id"], "content": out})
+            try:
+                args = json.loads(tc["function"]["arguments"] or "{}")
+                if not isinstance(args, dict): raise ValueError("arguments not an object")
+                out = tool_call(name, args)
+            except Exception as e:
+                out = "tool error: %s" % e
+            if name == "run" and "verify" in json.dumps(args): verify_runs += 1
+            print("[%02d] %s %s → %s" % (step, name, json.dumps(args, ensure_ascii=False)[:80], out[:120].replace("\n", " ")), flush=True)
+            rec(step=step, tool=name, args=json.dumps(args, ensure_ascii=False)[:300], out=out[-600:])
+            messages.append({"role": "tool", "tool_call_id": tc.get("id", "call_%d" % step), "name": name, "content": out})
             if name == "run" and "VERIFY: PASS" in out:
-                print("DONE at step", step)
-                return
-    print("stopped without PASS")
+                print("DONE at step %d — verify runs %d, %.0fs" % (step, verify_runs, time.time() - t0))
+                rec(done=True, verify_runs=verify_runs); return
+    print("stopped without PASS — verify runs %d, %.0fs" % (verify_runs, time.time() - t0))
+    rec(done=False, verify_runs=verify_runs)
 
 
 if __name__ == "__main__":
