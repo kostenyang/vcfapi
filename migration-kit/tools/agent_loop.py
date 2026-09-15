@@ -15,6 +15,7 @@
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -25,6 +26,7 @@ BASE = os.environ.get("LLM_BASE_URL", "http://127.0.0.1:11434/v1")
 KEY = os.environ.get("LLM_API_KEY", "")
 MODEL = os.environ.get("LLM_MODEL", "qwen2.5-coder")
 TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "600"))   # CPU 推論的大模型要放大，例如 1800
+_STATE = {}
 ALLOWED_CMDS = ("tools/verify.py", "tools/scan_legacy.py", "tools/lookup.py", "tools/progress.py")
 
 TOOLS = [
@@ -68,6 +70,13 @@ def tool_call(name, args):
                 return "refused: content is not valid Python (%s). File unchanged. Tip: use edit_file with a small unique 'old' snippet instead of rewriting the whole file." % e
             if len(args["content"]) < 200:
                 return "refused: content too short to be the whole module. Send the complete file, not a fragment."
+            if os.path.exists(p):
+                old_funcs = {n.name for n in ast.parse(open(p, encoding="utf-8").read()).body if isinstance(n, ast.FunctionDef)}
+                new_funcs = {n.name for n in ast.parse(args["content"]).body if isinstance(n, ast.FunctionDef)}
+                dropped = sorted(old_funcs - new_funcs)
+                if dropped:
+                    return ("refused: your content drops function(s) %s that callers depend on. "
+                            "Send the complete file with every function kept, or use edit_file for a small change." % ", ".join(dropped))
         open(p, "w", encoding="utf-8").write(args["content"])
         return "written %d bytes" % len(args["content"])
     if name == "edit_file":
@@ -77,7 +86,18 @@ def tool_call(name, args):
         src = open(p, encoding="utf-8").read()
         n = src.count(args["old"])
         if n != 1:
-            return "refused: 'old' occurs %d times (must be exactly 1). Copy the exact text from read_file." % n
+            hint = ""
+            if n == 0:
+                import difflib
+                lines = src.splitlines()
+                key = args["old"].strip().splitlines()[0] if args["old"].strip() else ""
+                close = difflib.get_close_matches(key, lines, n=3, cutoff=0.3) if key else []
+                if not close:
+                    toks = [t for t in re.split(r"[^A-Za-z0-9_./-]+", key) if len(t) > 5]
+                    close = [l for l in lines if any(t in l for t in toks)][:3]
+                if close:
+                    hint = " Closest lines in the file:\n" + "\n".join("  " + l.strip() for l in close)
+            return "refused: 'old' occurs %d times (must be exactly 1). Copy the exact text from read_file.%s" % (n, hint)
         new_src = src.replace(args["old"], args["new"])
         if p.endswith(".py"):
             import ast
@@ -94,7 +114,21 @@ def tool_call(name, args):
         if not parts or parts[0] not in ALLOWED_CMDS:
             return "refused: allowed = " + ", ".join(ALLOWED_CMDS)
         r = subprocess.run([sys.executable] + parts, cwd=HERE, capture_output=True, text=True, timeout=300)
-        return (r.stdout + r.stderr)[-3500:] + "\n[exit %d]" % r.returncode
+        out = (r.stdout + r.stderr)[-3500:] + "\n[exit %d]" % r.returncode
+        m_h = re.search(r"(\d+) hits", out); m_f = re.search(r"(\d+) failed", out); m_p = re.search(r"(\d+) passed", out)
+        if parts[0] in ("tools/verify.py", "tools/scan_legacy.py") and m_h:
+            hits = int(m_h.group(1)); failed = int(m_f.group(1)) if m_f else (0 if m_p else None)
+            prev = _STATE.get("last")
+            if prev:
+                d = []
+                if hits < prev[0]: d.append("legacy hits %d -> %d (progress)" % (prev[0], hits))
+                if hits > prev[0]: d.append("legacy hits %d -> %d (WORSE)" % (prev[0], hits))
+                if failed is not None and prev[1] is not None:
+                    if failed > prev[1]: d.append("REGRESSION: failing tests %d -> %d — your last edit broke behaviour; read the failing test names above and fix that file (e.g. response shape changed)" % (prev[1], failed))
+                    if failed < prev[1]: d.append("failing tests %d -> %d (progress)" % (prev[1], failed))
+                if d: out += "\n[delta] " + "; ".join(d)
+            _STATE["last"] = (hits, failed)
+        return out
     return "unknown tool"
 
 
